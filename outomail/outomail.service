@@ -1,0 +1,25 @@
+[Unit]
+Description=outomail mail server
+After=network.target
+Documentation=https://github.com/user/outomail
+
+[Service]
+Type=simple
+User=outomail
+Group=outomail
+WorkingDirectory=/opt/outomail
+ExecStart=/usr/bin/podman-compose up
+ExecStop=/usr/bin/podman-compose down
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/outomail/data
+
+# Environment
+EnvironmentFile=/opt/outomail/.env
+
+[Install]
+WantedBy=multi-user.target

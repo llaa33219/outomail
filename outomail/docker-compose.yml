@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  outomail:
+    build:
+      context: .
+      dockerfile: Containerfile
+    container_name: outomail
+    restart: unless-stopped
+    ports:
+      - "25:25"
+      - "587:587"
+      - "993:993"
+      - "7839:7839"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=/app/data/outomail.db
+      - MAIL_STORAGE_PATH=/app/data/mail
+      - TLS_CERT_PATH=/app/data/certs/cert.pem
+      - TLS_KEY_PATH=/app/data/certs/key.pem
+      - DKIM_KEY_PATH=/app/data/dkim/private.pem
