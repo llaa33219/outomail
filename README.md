@@ -95,4 +95,4 @@ uv run uvicorn app.main:app --reload
 
 ## License
 
-MIT
+Apache License 2.0
