@@ -21,12 +21,16 @@ RUN uv sync --frozen --no-dev
 COPY app/ ./app/
 COPY static/ ./static/
 COPY migrations/ ./migrations/
+COPY entrypoint.sh ./
 
 # Create data directories
 RUN mkdir -p data/mail data/certs data/dkim
+
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
 
 # Expose ports
 EXPOSE 25 587 993 80 443
 
 # Run
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443", "--ssl-keyfile", "/app/data/certs/key.pem", "--ssl-certfile", "/app/data/certs/cert.pem"]
+ENTRYPOINT ["./entrypoint.sh"]

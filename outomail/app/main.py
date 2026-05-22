@@ -99,10 +99,4 @@ app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 def cli():
     settings_obj = get_settings()
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=settings_obj.HTTP_PORT,
-        ssl_keyfile=settings_obj.TLS_KEY_PATH,
-        ssl_certfile=settings_obj.TLS_CERT_PATH,
-    )
+    uvicorn.run(app, host="0.0.0.0", port=settings_obj.HTTP_PORT)
