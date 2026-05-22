@@ -14,15 +14,17 @@ class DNSManager:
     def get_mx_record(self) -> dict:
         return {
             "type": "MX",
-            "name": self.domain,
-            "value": f"10 {self.domain}",
+            "name": "@",
+            "value": self.domain,
+            "priority": 10,
             "ttl": 3600,
             "description": "Mail exchange record - directs email to your server",
             "instructions": [
-                f"1. DNS 관리자 페이지에서 {self.domain} 도메인의 MX 레코드를 추가하세요",
-                f"2. 값: 10 {self.domain}",
-                "3. 우선순위(Priority): 10",
-                "4. TTL: 3600 (또는 1시간)",
+                f"1. DNS 관리자 페이지에서 MX 레코드를 추가하세요",
+                f"2. 이름(Host): @ 또는 {self.domain}",
+                f"3. 값(Value): {self.domain}",
+                "4. 우선순위(Priority): 10",
+                "5. TTL: 3600 (또는 1시간)",
             ],
         }
 

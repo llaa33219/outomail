@@ -106,6 +106,7 @@ class DNSRecord(BaseModel):
     type: str
     name: str
     value: str
+    priority: Optional[int] = None
     ttl: int = Field(ge=0)
     description: Optional[str] = None
     instructions: Optional[List[str]] = None
