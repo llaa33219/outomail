@@ -78,4 +78,4 @@ podman build -t outomail .
 | 25 | SMTP | MX receive |
 | 587 | SMTP Submission | Authenticated send |
 | 993 | IMAPS | TLS |
-| 7839 | HTTP | API + GUI |
+| 443 | HTTP | API + GUI |

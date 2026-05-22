@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 25
     SMTP_SUBMISSION_PORT: int = 587
     IMAP_PORT: int = 993
-    HTTP_PORT: int = 7839
+    HTTP_PORT: int = 443
     DATABASE_PATH: str = "data/outomail.db"
     MAIL_STORAGE_PATH: str = "data/mail"
     TLS_CERT_PATH: str = "data/certs/cert.pem"

@@ -24,7 +24,7 @@ DOMAIN=${domain}
 SMTP_PORT=25
 SMTP_SUBMISSION_PORT=587
 IMAP_PORT=993
-HTTP_PORT=7839
+HTTP_PORT=443
 DATABASE_PATH=data/outomail.db
 MAIL_STORAGE_PATH=data/mail
 TLS_CERT_PATH=data/certs/cert.pem
@@ -46,7 +46,7 @@ mkdir -p data/certs data/dkim data/mail
 echo -e "${YELLOW}🔥 방화벽 포트 열기...${NC}"
 echo ""
 
-PORTS=(25 587 993 7839)
+PORTS=(25 587 993 80 443)
 
 if command -v ufw &> /dev/null; then
     for port in "${PORTS[@]}"; do
@@ -109,7 +109,7 @@ echo "│    값(Value):  v=spf1 mx a:${DOMAIN} ~all                            
 echo "│                                                                             "
 echo "│ 4. DKIM 레코드 (TXT) - API로 확인 필요                                       "
 echo "│    이름(Host): outomail._domainkey                                           "
-echo "│    값(Value):  curl -H \"X-API-Key: KEY\" http://localhost:7839/api/settings/dns"
+echo "│    값(Value):  curl -H \"X-API-Key: KEY\" http://localhost/api/settings/dns   "
 echo "│                                                                             "
 echo "│ 5. DMARC 레코드 (TXT)                                                       "
 echo "│    이름(Host): _dmarc                                                       "
@@ -118,7 +118,7 @@ echo "└───────────────────────�
 echo ""
 echo -e "${BLUE}🔗 접속 정보${NC}"
 echo ""
-echo "   Web UI:    https://${DOMAIN}:7839"
+echo "   Web UI:    https://${DOMAIN}"
 echo "   SMTP:      ${DOMAIN}:25"
 echo "   Submission:${DOMAIN}:587"
 echo "   IMAP:      ${DOMAIN}:993"
@@ -127,6 +127,6 @@ echo -e "${BLUE}📝 유용한 명령어${NC}"
 echo ""
 echo "   로그 확인:     podman-compose logs -f"
 echo "   서버 중지:     podman-compose down"
-echo "   DNS 확인:      curl -H \"X-API-Key: KEY\" http://localhost:7839/api/settings/dns"
-echo "   TLS 상태 확인: curl -H \"X-API-Key: KEY\" http://localhost:7839/api/settings/tls"
+echo "   DNS 확인:      curl -H \"X-API-Key: KEY\" https://localhost/api/settings/dns"
+echo "   TLS 상태 확인: curl -H \"X-API-Key: KEY\" https://localhost/api/settings/tls"
 echo ""
