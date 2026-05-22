@@ -142,6 +142,8 @@ function renderLogin(container) {
     const authSubmitBtn = document.getElementById('auth-submit-btn');
     const displayNameGroup = document.getElementById('display-name-group');
 
+    const displayNameInput = document.getElementById('display_name');
+    
     authToggleLink.addEventListener('click', () => {
         isRegisterMode = !isRegisterMode;
         if (isRegisterMode) {
@@ -149,11 +151,13 @@ function renderLogin(container) {
             authSubmitBtn.textContent = 'Register';
             authToggleLink.textContent = 'Already have an account? Sign in';
             displayNameGroup.style.display = 'block';
+            displayNameInput.required = true;
         } else {
             authSubtitle.textContent = 'Sign in to your mailbox';
             authSubmitBtn.textContent = 'Sign In';
             authToggleLink.textContent = "Don't have an account? Register";
             displayNameGroup.style.display = 'none';
+            displayNameInput.required = false;
         }
         authError.classList.add('hidden');
     });
@@ -183,6 +187,8 @@ function renderLogin(container) {
                 let msg = 'Registration failed. ';
                 if (password.length < 8) {
                     msg += 'Password must be at least 8 characters.';
+                } else if (!displayName || displayName.trim().length === 0) {
+                    msg += 'Display name is required.';
                 } else {
                     msg += 'Email may already be in use.';
                 }

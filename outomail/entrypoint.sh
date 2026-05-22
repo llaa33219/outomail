@@ -10,6 +10,23 @@ if [ ! -f /app/data/certs/cert.pem ] || [ ! -f /app/data/certs/key.pem ]; then
     echo "Certificate generated."
 fi
 
+python3 -c "
+import http.server, threading, ssl
+
+class RedirectHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        host = self.headers.get('Host', '${DOMAIN:-localhost}').split(':')[0]
+        self.send_response(301)
+        self.send_header('Location', f'https://{host}:443{self.path}')
+        self.end_headers()
+    def log_message(self, format, *args):
+        pass
+
+server = http.server.HTTPServer(('0.0.0.0', 80), RedirectHandler)
+print('HTTP redirect server started on port 80')
+server.serve_forever()
+" &
+
 exec uv run uvicorn app.main:app --host 0.0.0.0 --port 443 \
     --ssl-keyfile /app/data/certs/key.pem \
     --ssl-certfile /app/data/certs/cert.pem
