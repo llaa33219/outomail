@@ -180,7 +180,13 @@ function renderLogin(container) {
                 authError.classList.remove('alert-error');
                 authError.classList.add('alert-success');
             } catch (err) {
-                authError.textContent = 'Registration failed. Email may already be in use.';
+                let msg = 'Registration failed. ';
+                if (password.length < 8) {
+                    msg += 'Password must be at least 8 characters.';
+                } else {
+                    msg += 'Email may already be in use.';
+                }
+                authError.textContent = msg;
                 authError.classList.remove('hidden');
                 authError.classList.remove('alert-success');
                 authError.classList.add('alert-error');
