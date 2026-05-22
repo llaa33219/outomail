@@ -105,12 +105,16 @@ function render() {
 function renderLogin(container) {
     container.innerHTML = `
         <div class="auth-container">
-            <div class="auth-card fade-in">
+            <div class="auth-card fade-in" id="auth-card">
                 <div class="auth-logo">
                     <h1>Outomail</h1>
-                    <p>Sign in to your mailbox</p>
+                    <p id="auth-subtitle">Sign in to your mailbox</p>
                 </div>
-                <form id="login-form">
+                <form id="auth-form">
+                    <div class="form-group" id="display-name-group" style="display: none;">
+                        <label for="display_name">Display Name</label>
+                        <input type="text" id="display_name" autocomplete="name">
+                    </div>
                     <div class="form-group">
                         <label for="email">Email</label>
                         <input type="email" id="email" required autocomplete="email">
@@ -119,29 +123,80 @@ function renderLogin(container) {
                         <label for="password">Password</label>
                         <input type="password" id="password" required autocomplete="current-password">
                     </div>
-                    <div id="login-error" class="alert alert-error hidden"></div>
-                    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                    <div id="auth-error" class="alert alert-error hidden"></div>
+                    <button type="submit" class="btn btn-primary btn-block" id="auth-submit-btn">Sign In</button>
                 </form>
+                <div class="auth-toggle">
+                    <a id="auth-toggle-link">Don't have an account? Register</a>
+                </div>
             </div>
         </div>
     `;
 
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
+    let isRegisterMode = false;
+
+    const authForm = document.getElementById('auth-form');
+    const authError = document.getElementById('auth-error');
+    const authToggleLink = document.getElementById('auth-toggle-link');
+    const authSubtitle = document.getElementById('auth-subtitle');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const displayNameGroup = document.getElementById('display-name-group');
+
+    authToggleLink.addEventListener('click', () => {
+        isRegisterMode = !isRegisterMode;
+        if (isRegisterMode) {
+            authSubtitle.textContent = 'Create your account';
+            authSubmitBtn.textContent = 'Register';
+            authToggleLink.textContent = 'Already have an account? Sign in';
+            displayNameGroup.style.display = 'block';
+        } else {
+            authSubtitle.textContent = 'Sign in to your mailbox';
+            authSubmitBtn.textContent = 'Sign In';
+            authToggleLink.textContent = "Don't have an account? Register";
+            displayNameGroup.style.display = 'none';
+        }
+        authError.classList.add('hidden');
+    });
+
+    authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        const errorEl = document.getElementById('login-error');
+        const displayName = document.getElementById('display_name').value;
 
-        try {
-            const data = await apiFetch('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ email, password })
-            });
-            setApiKey(data.api_key);
-            navigate('mailbox');
-        } catch (err) {
-            errorEl.textContent = 'Invalid email or password';
-            errorEl.classList.remove('hidden');
+        if (isRegisterMode) {
+            try {
+                await apiFetch('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password, display_name: displayName })
+                });
+                isRegisterMode = false;
+                authSubtitle.textContent = 'Sign in to your mailbox';
+                authSubmitBtn.textContent = 'Sign In';
+                authToggleLink.textContent = "Don't have an account? Register";
+                displayNameGroup.style.display = 'none';
+                authError.textContent = 'Registration successful! Please sign in.';
+                authError.classList.remove('hidden');
+                authError.classList.remove('alert-error');
+                authError.classList.add('alert-success');
+            } catch (err) {
+                authError.textContent = 'Registration failed. Email may already be in use.';
+                authError.classList.remove('hidden');
+                authError.classList.remove('alert-success');
+                authError.classList.add('alert-error');
+            }
+        } else {
+            try {
+                const data = await apiFetch('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                setApiKey(data.api_key);
+                navigate('mailbox');
+            } catch (err) {
+                authError.textContent = 'Invalid email or password';
+                authError.classList.remove('hidden');
+            }
         }
     });
 }
@@ -234,24 +289,27 @@ function renderMailboxList(messages, mailboxId) {
 
     container.innerHTML = `
         <div class="mailbox-list fade-in">
-            ${messages.map(msg => `
-                <div class="mail-item ${msg.read ? '' : 'unread'}" data-id="${msg.id}">
-                    <div class="mail-checkbox">
-                        <input type="checkbox">
+            ${messages.map((msg, index) => `
+                <div>
+                    <div class="mail-item ${msg.read ? '' : 'unread'}" data-id="${msg.id}">
+                        <div class="mail-checkbox">
+                            <input type="checkbox">
+                        </div>
+                        <div class="mail-avatar">${getInitials(msg.from)}</div>
+                        <div class="mail-content">
+                            <span class="mail-from">${msg.from.name || msg.from.email}</span>
+                            <span class="mail-subject">${msg.subject}</span>
+                            <span class="mail-date">${formatDate(msg.date)}</span>
+                        </div>
+                        <div class="mail-actions">
+                            <button class="btn btn-icon delete-btn" data-id="${msg.id}" title="Delete">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="mail-avatar">${getInitials(msg.from)}</div>
-                    <div class="mail-content">
-                        <span class="mail-from">${msg.from.name || msg.from.email}</span>
-                        <span class="mail-subject">${msg.subject}</span>
-                        <span class="mail-date">${formatDate(msg.date)}</span>
-                    </div>
-                    <div class="mail-actions">
-                        <button class="btn btn-icon delete-btn" data-id="${msg.id}" title="Delete">
-                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                        </button>
-                    </div>
+                    ${index < messages.length - 1 ? '<div class="mail-item-divider"></div>' : ''}
                 </div>
             `).join('')}
         </div>
