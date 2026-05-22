@@ -1,18 +1,26 @@
+import urllib.request
+
 class DNSManager:
     def __init__(self, domain: str, dkim_manager) -> None:
         self.domain = domain
         self.dkim_manager = dkim_manager
 
+    def get_server_ip(self) -> str:
+        try:
+            return urllib.request.urlopen("https://api.ipify.org").read().decode()
+        except Exception:
+            return "서버_IP_확인_필요"
+
     def get_mx_record(self) -> dict:
         return {
             "type": "MX",
             "name": self.domain,
-            "value": f"10 mail.{self.domain}",
+            "value": f"10 {self.domain}",
             "ttl": 3600,
             "description": "Mail exchange record - directs email to your server",
             "instructions": [
                 f"1. DNS 관리자 페이지에서 {self.domain} 도메인의 MX 레코드를 추가하세요",
-                f"2. 값: 10 mail.{self.domain}",
+                f"2. 값: 10 {self.domain}",
                 "3. 우선순위(Priority): 10",
                 "4. TTL: 3600 (또는 1시간)",
             ],
@@ -69,15 +77,17 @@ class DNSManager:
         ]
 
     def get_setup_instructions(self) -> dict:
+        server_ip = self.get_server_ip()
         return {
             "domain": self.domain,
+            "server_ip": server_ip,
             "step1": {
                 "title": "A 레코드 설정",
-                "description": f"mail.{self.domain}이 서버 IP를 가리키도록 A 레코드를 추가하세요",
+                "description": f"{self.domain}이 서버 IP를 가리키도록 A 레코드를 추가하세요",
                 "record": {
                     "type": "A",
-                    "name": f"mail.{self.domain}",
-                    "value": "서버의 공인 IP 주소",
+                    "name": self.domain,
+                    "value": server_ip,
                     "ttl": 3600,
                 },
             },
@@ -104,6 +114,7 @@ class DNSManager:
             "verification": {
                 "title": "DNS 설정 확인",
                 "commands": [
+                    f"dig A {self.domain}",
                     f"dig MX {self.domain}",
                     f"dig TXT {self.domain}",
                     f"dig TXT {self.dkim_manager.selector}._domainkey.{self.domain}",

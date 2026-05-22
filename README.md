@@ -72,7 +72,8 @@ curl -H "X-API-Key: YOUR_API_KEY" http://localhost:7839/api/settings/dns
 
 | 레코드 | 이름 | 값 | 설명 |
 |--------|------|-----|------|
-| MX | `@` | `10 mail.yourdomain.com` | 이메일 수신 |
+| A | `@` | `서버_IP` | 서버 IP指向 |
+| MX | `@` | `10 yourdomain.com` | 이메일 수신 |
 | TXT | `@` | `v=spf1 mx a:yourdomain.com ~all` | 이메일 스푸핑 방지 |
 | TXT | `outomail._domainkey` | DKIM 공개키 | 이메일 서명 검증 |
 | TXT | `_dmarc` | `v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com` | 인증 정책 |
@@ -80,6 +81,7 @@ curl -H "X-API-Key: YOUR_API_KEY" http://localhost:7839/api/settings/dns
 ### DNS 설정 확인
 
 ```bash
+dig A yourdomain.com
 dig MX yourdomain.com
 dig TXT yourdomain.com
 dig TXT outomail._domainkey.yourdomain.com
