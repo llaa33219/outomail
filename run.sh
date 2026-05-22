@@ -9,15 +9,6 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-check_port() {
-    local port=$1
-    if ss -tlnp | grep -q ":${port} "; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 if [ ! -f .env ]; then
     echo -e "${BLUE}📧 outomail 설정을 시작합니다.${NC}"
     echo ""
@@ -52,6 +43,31 @@ fi
 
 mkdir -p data/certs data/dkim data/mail
 
+echo -e "${YELLOW}🔥 방화벽 포트 열기...${NC}"
+echo ""
+
+PORTS=(25 587 993 7839)
+
+if command -v ufw &> /dev/null; then
+    for port in "${PORTS[@]}"; do
+        ufw allow $port/tcp 2>/dev/null && echo -e "  ${GREEN}✓${NC} ufw: 포트 $port 열림" || true
+    done
+    ufw reload 2>/dev/null || true
+elif command -v firewall-cmd &> /dev/null; then
+    for port in "${PORTS[@]}"; do
+        firewall-cmd --permanent --add-port=$port/tcp 2>/dev/null && echo -e "  ${GREEN}✓${NC} firewalld: 포트 $port 열림" || true
+    done
+    firewall-cmd --reload 2>/dev/null || true
+else
+    for port in "${PORTS[@]}"; do
+        iptables -C INPUT -p tcp --dport $port -j ACCEPT 2>/dev/null || \
+        iptables -A INPUT -p tcp --dport $port -j ACCEPT 2>/dev/null && \
+        echo -e "  ${GREEN}✓${NC} iptables: 포트 $port 열림" || true
+    done
+    netfilter-persistent save 2>/dev/null || iptables-save > /etc/iptables/rules.v4 2>/dev/null || true
+fi
+
+echo ""
 echo -e "${BLUE}🚀 outomail 시작...${NC}"
 podman-compose up -d --build
 
@@ -62,59 +78,12 @@ echo ""
 SERVER_IP=$(curl -s https://api.ipify.org)
 DOMAIN=$(grep "^DOMAIN=" .env | cut -d'=' -f2)
 
-echo -e "${YELLOW}🔥 방화벽 포트 확인 중...${NC}"
-echo ""
-
-PORTS=(25 587 993 7839)
-PORT_NAMES=("SMTP" "SMTP Submission" "IMAP" "Web UI")
-CLOSED_PORTS=()
-
-for i in "${!PORTS[@]}"; do
-    port=${PORTS[$i]}
-    name=${PORT_NAMES[$i]}
-    if check_port $port; then
-        echo -e "  ${GREEN}✓${NC} 포트 $port ($name) - 열림"
-    else
-        echo -e "  ${RED}✗${NC} 포트 $port ($name) - 닫힘"
-        CLOSED_PORTS+=($port)
-    fi
-done
-
-if [ ${#CLOSED_PORTS[@]} -gt 0 ]; then
-    echo ""
-    echo -e "${RED}⚠️  일부 포트가 닫혀 있습니다!${NC}"
-    echo ""
-    echo "방화벽에서 아래 포트를 열어야 합니다:"
-    echo ""
-    echo -e "${BLUE}=== Hostinger VPS 방화벽 설정 ===${NC}"
-    echo ""
-    echo "1. Hostinger 대시보드 (hpanel.hostinger.com) 접속"
-    echo "2. VPS → 관리 → 방화벽 설정"
-    echo "3. Inbound 규칙 추가:"
-    echo ""
-    for port in "${CLOSED_PORTS[@]}"; do
-        echo "   - 포트 $port / TCP / 허용"
-    done
-    echo ""
-    echo -e "${BLUE}=== 또는 서버에서 직접 설정 ===${NC}"
-    echo ""
-    echo "sudo ufw allow 25/tcp"
-    echo "sudo ufw allow 587/tcp"
-    echo "sudo ufw allow 993/tcp"
-    echo "sudo ufw allow 7839/tcp"
-    echo "sudo ufw reload"
-    echo ""
-fi
-
 echo -e "${YELLOW}🔒 TLS 인증서 확인 중...${NC}"
-echo ""
-
 sleep 5
-
 if [ -f "data/certs/cert.pem" ] && [ -f "data/certs/key.pem" ]; then
     echo -e "${GREEN}✅ TLS 인증서 준비 완료!${NC}"
 else
-    echo -e "${YELLOW}⚠️  TLS 인증서를 확인하는 중입니다...${NC}"
+    echo -e "${YELLOW}⚠️  TLS 인증서 생성 중... 잠시만 기다려주세요.${NC}"
 fi
 
 echo ""
