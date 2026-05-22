@@ -12,6 +12,7 @@ from app.dns.dkim import DKIMManager
 from app.imap.server import IMAPServer
 from app.routers import auth, mailboxes, messages, settings
 from app.smtp.server import SMTPServer
+from app.tls.certbot import TLSManager
 
 
 @asynccontextmanager
@@ -37,6 +38,14 @@ async def lifespan(app: FastAPI):
     )
     if not dkim_manager.key_path.exists():
         await dkim_manager.generate_keys()
+
+    tls_manager = TLSManager(
+        domain=settings_obj.DOMAIN,
+        cert_path=settings_obj.TLS_CERT_PATH,
+        key_path=settings_obj.TLS_KEY_PATH,
+        email=settings_obj.LETSENCRYPT_EMAIL or settings_obj.ADMIN_EMAIL,
+    )
+    await tls_manager.ensure_certificate()
 
     smtp_server = SMTPServer(port=settings_obj.SMTP_PORT)
     smtp_server.start()
