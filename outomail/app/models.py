@@ -108,11 +108,33 @@ class DNSRecord(BaseModel):
     value: str
     ttl: int = Field(ge=0)
     description: Optional[str] = None
+    instructions: Optional[List[str]] = None
 
 
 class DNSConfig(BaseModel):
     records: List[DNSRecord] = []
     domain: str
+
+
+class DNSStep(BaseModel):
+    title: str
+    description: str
+    record: DNSRecord
+
+
+class DNSVerification(BaseModel):
+    title: str
+    commands: List[str]
+
+
+class DNSSetupInstructions(BaseModel):
+    domain: str
+    step1: DNSStep
+    step2: DNSStep
+    step3: DNSStep
+    step4: DNSStep
+    step5: DNSStep
+    verification: DNSVerification
 
 
 class AuthResponse(BaseModel):

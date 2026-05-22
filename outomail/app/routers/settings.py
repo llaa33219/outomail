@@ -10,6 +10,16 @@ from app.tls.certbot import TLSManager
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 
+def _get_dns_manager() -> DNSManager:
+    settings = get_settings()
+    dkim_manager = DKIMManager(
+        domain=settings.DOMAIN,
+        selector=settings.DKIM_SELECTOR,
+        key_path=settings.DKIM_KEY_PATH,
+    )
+    return DNSManager(domain=settings.DOMAIN, dkim_manager=dkim_manager)
+
+
 @router.get("/dns", response_model=DNSConfig)
 async def get_dns_settings(user: dict = Depends(get_current_user)):
     settings = get_settings()
@@ -26,6 +36,20 @@ async def get_dns_settings(user: dict = Depends(get_current_user)):
         domain=settings.DOMAIN,
         records=[DNSRecord(**r) for r in records],
     )
+
+
+@router.get("/dns/setup")
+async def get_dns_setup_instructions(user: dict = Depends(get_current_user)):
+    settings = get_settings()
+    dkim_manager = DKIMManager(
+        domain=settings.DOMAIN,
+        selector=settings.DKIM_SELECTOR,
+        key_path=settings.DKIM_KEY_PATH,
+    )
+    if not dkim_manager.key_path.exists():
+        await dkim_manager.generate_keys()
+    dns_manager = DNSManager(domain=settings.DOMAIN, dkim_manager=dkim_manager)
+    return dns_manager.get_setup_instructions()
 
 
 @router.get("/tls")
