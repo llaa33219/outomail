@@ -43,7 +43,14 @@ async function apiFetch(endpoint, options = {}) {
         throw new Error('Unauthorized');
     }
     if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        let errorMsg = `API Error: ${response.status}`;
+        try {
+            const errorData = await response.json();
+            if (errorData.detail) {
+                errorMsg = errorData.detail;
+            }
+        } catch (e) {}
+        throw new Error(errorMsg);
     }
     return response.json();
 }
@@ -184,15 +191,7 @@ function renderLogin(container) {
                 authError.classList.remove('alert-error');
                 authError.classList.add('alert-success');
             } catch (err) {
-                let msg = 'Registration failed. ';
-                if (password.length < 8) {
-                    msg += 'Password must be at least 8 characters.';
-                } else if (!displayName || displayName.trim().length === 0) {
-                    msg += 'Display name is required.';
-                } else {
-                    msg += 'Email may already be in use.';
-                }
-                authError.textContent = msg;
+                authError.textContent = err.message || 'Registration failed. Please try again.';
                 authError.classList.remove('hidden');
                 authError.classList.remove('alert-success');
                 authError.classList.add('alert-error');
@@ -206,7 +205,7 @@ function renderLogin(container) {
                 setApiKey(data.api_key);
                 navigate('mailbox');
             } catch (err) {
-                authError.textContent = 'Invalid email or password';
+                authError.textContent = err.message || 'Invalid email or password';
                 authError.classList.remove('hidden');
             }
         }
